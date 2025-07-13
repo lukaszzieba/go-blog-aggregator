@@ -1,11 +1,11 @@
-package config
+package internal
 
 import (
 	"encoding/json"
 	"os"
 )
 
-const CONFIG_FILE = "gatorconfig.json"
+const CONFIG_FILE = ".gatorconfig.json"
 
 type Config struct {
 	Db_url            string `json:"db_url"`

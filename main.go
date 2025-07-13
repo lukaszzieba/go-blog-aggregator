@@ -1,19 +1,22 @@
 package main
 
 import (
-	"fmt"
+	"os"
 
-	"github.com/lukaszzieba/go-blog-agregator/internal/config"
+	"github.com/lukaszzieba/go-blog-agregator/internal"
 )
 
 func main() {
-	c, err := config.ReadConfig()
+	c, err := internal.ReadConfig()
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
-	c2, err := c.SetUser("stork")
-	if err != nil {
-		fmt.Println(err)
+	args := os.Args[1:]
+	if len(args) < 2 {
+		os.Exit(1)
 	}
-	fmt.Println(c2)
+	satate := internal.NewState(c)
+	commands := internal.NewCommands()
+	commands.Register("login", internal.HandlerLogin)
+	commands.Run(satate, internal.Command{Name: args[0], Args: args[1:]})
 }
