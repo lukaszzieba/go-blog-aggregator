@@ -1,22 +1,44 @@
 package main
 
 import (
+	"database/sql"
+	"fmt"
 	"os"
 
+	_ "github.com/lib/pq"
 	"github.com/lukaszzieba/go-blog-agregator/internal"
+	"github.com/lukaszzieba/go-blog-agregator/internal/database"
 )
 
 func main() {
 	c, err := internal.ReadConfig()
 	if err != nil {
+		fmt.Println("read config filed")
 		panic(err)
 	}
-	args := os.Args[1:]
-	if len(args) < 2 {
+	db, err := sql.Open("postgres", c.Db_url)
+	if err != nil {
+		fmt.Println("open db failed")
+		panic(err)
+	}
+	dbQueries := database.New(db)
+	satate := internal.NewState(c, dbQueries)
+	args, err := getArgs()
+	if err != nil {
+		fmt.Println(err)
 		os.Exit(1)
 	}
-	satate := internal.NewState(c)
 	commands := internal.NewCommands()
 	commands.Register("login", internal.HandlerLogin)
+	commands.Register("register", internal.HandlerRegister)
 	commands.Run(satate, internal.Command{Name: args[0], Args: args[1:]})
+}
+
+func getArgs() ([]string, error) {
+	args := os.Args[1:]
+	if len(args) < 2 {
+		return nil, fmt.Errorf("wrong parameter number")
+	}
+
+	return args, nil
 }
