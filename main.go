@@ -31,12 +31,14 @@ func main() {
 	commands := internal.NewCommands()
 	commands.Register("login", internal.HandlerLogin)
 	commands.Register("register", internal.HandlerRegister)
+	commands.Register("reset", internal.HandlerReset)
+	commands.Register("users", internal.HandlerUsers)
 	commands.Run(satate, internal.Command{Name: args[0], Args: args[1:]})
 }
 
 func getArgs() ([]string, error) {
 	args := os.Args[1:]
-	if len(args) < 2 {
+	if len(args) < 1 {
 		return nil, fmt.Errorf("wrong parameter number")
 	}
 

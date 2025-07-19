@@ -58,3 +58,30 @@ func HandlerRegister(s *State, cmd Command) error {
 	s.Config.SetUser(user.Name)
 	return nil
 }
+
+func HandlerUsers(s *State, cmd Command) error {
+	data, err := s.db.GetUsers(context.Background())
+	if err != nil {
+		return err
+	}
+
+	for _, u := range data {
+		fmt.Println(getUserLine(u, s.Config.Current_user_name))
+	}
+
+	return nil
+}
+
+func getUserLine(u database.User, currentUserName string) string {
+	s := fmt.Sprint("*" + " " + u.Name)
+
+	if u.Name == currentUserName {
+		s = fmt.Sprint(s + " " + "(current)")
+	}
+
+	return s
+}
+
+func HandlerReset(s *State, cmd Command) error {
+	return s.db.DeleteAllUsers(context.Background())
+}
