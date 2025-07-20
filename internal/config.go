@@ -3,20 +3,22 @@ package internal
 import (
 	"encoding/json"
 	"os"
+
+	"github.com/lukaszzieba/go-blog-agregator/internal/database"
 )
 
 const CONFIG_FILE = ".gatorconfig.json"
 
 type Config struct {
-	Db_url            string `json:"db_url"`
-	Current_user_name string `json:"current_user_name"`
+	Db_url       string        `json:"db_url"`
+	Current_user database.User `json:"current_user"`
 }
 
 func NewConfig(dbUrl string) *Config {
 	return &Config{Db_url: dbUrl}
 }
 
-func (c *Config) SetUser(userName string) (Config, error) {
+func (c *Config) SetUser(user database.User) (Config, error) {
 	path, err := getConfigPath()
 	if err != nil {
 		return Config{}, err
@@ -29,7 +31,7 @@ func (c *Config) SetUser(userName string) (Config, error) {
 
 	defer file.Close()
 
-	c.Current_user_name = userName
+	c.Current_user = user
 	if err := json.NewEncoder(file).Encode(c); err != nil {
 		return Config{}, err
 	}

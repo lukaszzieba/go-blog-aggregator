@@ -34,7 +34,11 @@ func main() {
 	commands.Register("reset", internal.HandlerReset)
 	commands.Register("users", internal.HandlerUsers)
 	commands.Register("agg", internal.HandleAgg)
-	commands.Run(satate, internal.Command{Name: args[0], Args: args[1:]})
+	commands.Register("addfeed", internal.HandleAddFeed)
+	err = commands.Run(satate, internal.Command{Name: args[0], Args: args[1:]})
+	if err != nil {
+		panic(err)
+	}
 }
 
 func getArgs() ([]string, error) {
