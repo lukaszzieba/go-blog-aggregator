@@ -89,8 +89,7 @@ func HandleAgg(s *State, cmd Command) error {
 
 func HandleAddFeed(s *State, cmd Command) error {
 	if len(cmd.Args) < 2 {
-		fmt.Println("add feed command rqeires 2 args: name, url")
-		os.Exit(1)
+		return fmt.Errorf("follow cmd requires url")
 	}
 
 	name := cmd.Args[0]
@@ -99,6 +98,17 @@ func HandleAddFeed(s *State, cmd Command) error {
 	feed, err := s.db.CreateFeed(context.Background(), database.CreateFeedParams{CreatedAt: time.Now(), UpdatedAt: time.Now(), Name: name, Url: url, UserID: s.Config.Current_user.ID})
 	if err != nil {
 		return fmt.Errorf("create feed failed: %w", err)
+	}
+	feedFlow := database.CreateFeedFollowParams{
+		UserID:    s.Config.Current_user.ID,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		FeedID:    feed.ID,
+	}
+
+	_, err = s.db.CreateFeedFollow(context.Background(), feedFlow)
+	if err != nil {
+		return fmt.Errorf("create feed follow failed: %w", err)
 	}
 
 	fmt.Println(feed)
@@ -116,4 +126,45 @@ func HandlerFeeds(s *State, cmd Command) error {
 	}
 
 	return nil
+}
+
+func HandlerFeedFollow(s *State, cmd Command) error {
+	if len(cmd.Args) == 0 {
+		return fmt.Errorf("follow cmd requires url")
+	}
+
+	url := cmd.Args[0]
+	feed, err := s.db.GetFeedByUrl(context.Background(), url)
+	if err != nil {
+		return err
+	}
+
+	followFeed := database.CreateFeedFollowParams{UserID: s.Config.Current_user.ID, CreatedAt: time.Now(), UpdatedAt: time.Now(), FeedID: feed.ID}
+	res, err := s.db.CreateFeedFollow(context.Background(), followFeed)
+	if err != nil {
+		return err
+	}
+	printFeedFollow(res)
+
+	return nil
+}
+
+func HandlerFeedFollowing(s *State, cmd Command) error {
+	feeds, err := s.db.GetFeedsForUser(context.Background(), s.Config.Current_user.ID)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("User name			: %s\n", s.Config.Current_user.Name)
+	fmt.Println("Feed names:")
+	for _, f := range feeds {
+		fmt.Printf("- %s\n", f.String)
+	}
+
+	return nil
+}
+
+func printFeedFollow(feedFollow database.CreateFeedFollowRow) {
+	fmt.Printf("User name:				%s\n", feedFollow.UserName.String)
+	fmt.Printf("Feed name:				%s\n", feedFollow.FeedName.String)
 }

@@ -37,6 +37,9 @@ func main() {
 	commands.Register("agg", internal.HandleAgg)
 	commands.Register("addfeed", internal.HandleAddFeed)
 	commands.Register("feeds", internal.HandlerFeeds)
+	commands.Register("follow", internal.HandlerFeedFollow)
+	commands.Register("following", internal.HandlerFeedFollowing)
+
 	err = commands.Run(satate, internal.Command{Name: args[0], Args: args[1:]})
 	if err != nil {
 		log.Fatal(err)
