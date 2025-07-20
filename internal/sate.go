@@ -85,3 +85,14 @@ func getUserLine(u database.User, currentUserName string) string {
 func HandlerReset(s *State, cmd Command) error {
 	return s.db.DeleteAllUsers(context.Background())
 }
+
+func HandleAgg(s *State, cmd Command) error {
+	res, err := fetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(res)
+
+	return nil
+}

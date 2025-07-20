@@ -33,6 +33,7 @@ func main() {
 	commands.Register("register", internal.HandlerRegister)
 	commands.Register("reset", internal.HandlerReset)
 	commands.Register("users", internal.HandlerUsers)
+	commands.Register("agg", internal.HandleAgg)
 	commands.Run(satate, internal.Command{Name: args[0], Args: args[1:]})
 }
 
