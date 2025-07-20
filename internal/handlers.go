@@ -104,3 +104,16 @@ func HandleAddFeed(s *State, cmd Command) error {
 	fmt.Println(feed)
 	return nil
 }
+
+func HandlerFeeds(s *State, cmd Command) error {
+	feeds, err := s.db.GetFeedsWithUsers(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to get feeds: %w", err)
+	}
+
+	for _, feed := range feeds {
+		fmt.Printf("* %s (%s) - created by %s\n", feed.Name, feed.Url, feed.UserName)
+	}
+
+	return nil
+}

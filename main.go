@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
 
 	_ "github.com/lib/pq"
@@ -35,9 +36,10 @@ func main() {
 	commands.Register("users", internal.HandlerUsers)
 	commands.Register("agg", internal.HandleAgg)
 	commands.Register("addfeed", internal.HandleAddFeed)
+	commands.Register("feeds", internal.HandlerFeeds)
 	err = commands.Run(satate, internal.Command{Name: args[0], Args: args[1:]})
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
 
