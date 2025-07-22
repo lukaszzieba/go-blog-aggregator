@@ -87,7 +87,7 @@ func HandleAgg(s *State, cmd Command) error {
 	return nil
 }
 
-func HandleAddFeed(s *State, cmd Command) error {
+func HandleAddFeed(s *State, cmd Command, user database.User) error {
 	if len(cmd.Args) < 2 {
 		return fmt.Errorf("follow cmd requires url")
 	}
@@ -95,7 +95,9 @@ func HandleAddFeed(s *State, cmd Command) error {
 	name := cmd.Args[0]
 	url := cmd.Args[1]
 
-	feed, err := s.db.CreateFeed(context.Background(), database.CreateFeedParams{CreatedAt: time.Now(), UpdatedAt: time.Now(), Name: name, Url: url, UserID: s.Config.Current_user.ID})
+	fmt.Printf("Adding feed with name: %s and url: %s\n", name, url)
+
+	feed, err := s.db.CreateFeed(context.Background(), database.CreateFeedParams{CreatedAt: time.Now(), UpdatedAt: time.Now(), Name: name, Url: url, UserID: user.ID})
 	if err != nil {
 		return fmt.Errorf("create feed failed: %w", err)
 	}
@@ -128,7 +130,7 @@ func HandlerFeeds(s *State, cmd Command) error {
 	return nil
 }
 
-func HandlerFeedFollow(s *State, cmd Command) error {
+func HandlerFeedFollow(s *State, cmd Command, user database.User) error {
 	if len(cmd.Args) == 0 {
 		return fmt.Errorf("follow cmd requires url")
 	}
@@ -139,7 +141,7 @@ func HandlerFeedFollow(s *State, cmd Command) error {
 		return err
 	}
 
-	followFeed := database.CreateFeedFollowParams{UserID: s.Config.Current_user.ID, CreatedAt: time.Now(), UpdatedAt: time.Now(), FeedID: feed.ID}
+	followFeed := database.CreateFeedFollowParams{UserID: user.ID, CreatedAt: time.Now(), UpdatedAt: time.Now(), FeedID: feed.ID}
 	res, err := s.db.CreateFeedFollow(context.Background(), followFeed)
 	if err != nil {
 		return err
@@ -149,8 +151,8 @@ func HandlerFeedFollow(s *State, cmd Command) error {
 	return nil
 }
 
-func HandlerFeedFollowing(s *State, cmd Command) error {
-	feeds, err := s.db.GetFeedsForUser(context.Background(), s.Config.Current_user.ID)
+func HandlerFeedFollowing(s *State, cmd Command, user database.User) error {
+	feeds, err := s.db.GetFeedsForUser(context.Background(), user.ID)
 	if err != nil {
 		return err
 	}

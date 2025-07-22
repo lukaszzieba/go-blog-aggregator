@@ -35,10 +35,10 @@ func main() {
 	commands.Register("reset", internal.HandlerReset)
 	commands.Register("users", internal.HandlerUsers)
 	commands.Register("agg", internal.HandleAgg)
-	commands.Register("addfeed", internal.HandleAddFeed)
+	commands.Register("addfeed", internal.MiddlewareLoggedIn(internal.HandleAddFeed))
 	commands.Register("feeds", internal.HandlerFeeds)
-	commands.Register("follow", internal.HandlerFeedFollow)
-	commands.Register("following", internal.HandlerFeedFollowing)
+	commands.Register("follow", internal.MiddlewareLoggedIn(internal.HandlerFeedFollow))
+	commands.Register("following", internal.MiddlewareLoggedIn(internal.HandlerFeedFollowing))
 
 	err = commands.Run(satate, internal.Command{Name: args[0], Args: args[1:]})
 	if err != nil {
