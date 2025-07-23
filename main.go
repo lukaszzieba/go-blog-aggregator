@@ -39,6 +39,7 @@ func main() {
 	commands.Register("feeds", internal.HandlerFeeds)
 	commands.Register("follow", internal.MiddlewareLoggedIn(internal.HandlerFeedFollow))
 	commands.Register("following", internal.MiddlewareLoggedIn(internal.HandlerFeedFollowing))
+	commands.Register("unfollow", internal.MiddlewareLoggedIn(internal.HandlerFeedUnfollow))
 
 	err = commands.Run(satate, internal.Command{Name: args[0], Args: args[1:]})
 	if err != nil {
