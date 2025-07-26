@@ -84,6 +84,12 @@ func HandleAgg(s *State, cmd Command) error {
 
 	fmt.Println(res)
 
+	timeBetweenRequests, _ := time.ParseDuration("1m")
+	ticker := time.NewTicker(timeBetweenRequests)
+	for ; ; <-ticker.C {
+		scrapeFeeds(s)
+	}
+
 	return nil
 }
 
@@ -182,6 +188,28 @@ func HandlerFeedUnfollow(s *State, cmd Command, user database.User) error {
 		return err
 	}
 
+	return nil
+}
+
+func scrapeFeeds(s *State) error {
+	fmt.Println("SRAPE")
+	nextToFetch, err := s.db.GetNextFeedToFetch(context.Background())
+	if err != nil {
+		return err
+	}
+
+	err = s.db.MarkFeedFetched(context.Background(), nextToFetch.ID)
+	if err != nil {
+		return err
+	}
+
+	res, err := fetchFeed(context.Background(), nextToFetch.Url)
+	if err != nil {
+		return err
+	}
+	for _, item := range res.Channel.Item {
+		fmt.Printf("Title: %s\n", item.Title)
+	}
 	return nil
 }
 

@@ -22,7 +22,7 @@ WITH insert_feed_follow AS (
         $3,
         $4
     )
-    RETURNING id, created_at, updated_at, user_id, feed_id
+    RETURNING id, created_at, updated_at, user_id, feed_id, last_fetched_at
 )
 
 SELECT  
@@ -112,4 +112,30 @@ func (q *Queries) GetFeedsForUser(ctx context.Context, userID uuid.UUID) ([]sql.
 		return nil, err
 	}
 	return items, nil
+}
+
+const getNextFeedToFetch = `-- name: GetNextFeedToFetch :one
+select f.id, f.url, ff.last_fetched_at from feed_follows ff join feeds f on ff.feed_id = f.id order by ff.last_fetched_at asc nulls first limit 1
+`
+
+type GetNextFeedToFetchRow struct {
+	ID            uuid.UUID
+	Url           string
+	LastFetchedAt sql.NullTime
+}
+
+func (q *Queries) GetNextFeedToFetch(ctx context.Context) (GetNextFeedToFetchRow, error) {
+	row := q.db.QueryRowContext(ctx, getNextFeedToFetch)
+	var i GetNextFeedToFetchRow
+	err := row.Scan(&i.ID, &i.Url, &i.LastFetchedAt)
+	return i, err
+}
+
+const markFeedFetched = `-- name: MarkFeedFetched :exec
+UPDATE feed_follows SET last_fetched_at = CURRENT_TIMESTAMP, update_at = CURRENT_TIMESTAMP WHERE id = $1
+`
+
+func (q *Queries) MarkFeedFetched(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, markFeedFetched, id)
+	return err
 }
