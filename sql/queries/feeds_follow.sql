@@ -34,4 +34,4 @@ DELETE FROM feed_follows where user_id = $1 AND feed_id = $2;
 UPDATE feed_follows SET last_fetched_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $1; 
 
 -- name: GetNextFeedToFetch :one
-select f.id, f.url, ff.last_fetched_at from feed_follows ff join feeds f on ff.feed_id = f.id order by ff.last_fetched_at asc nulls first limit 1;
+select ff.id, f.url, ff.last_fetched_at from feed_follows ff join feeds f on ff.feed_id = f.id order by ff.last_fetched_at asc nulls first limit 1;

@@ -2,10 +2,12 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"os"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/lukaszzieba/go-blog-agregator/internal/database"
 )
 
@@ -77,23 +79,34 @@ func HandlerReset(s *State, cmd Command) error {
 }
 
 func HandleAgg(s *State, cmd Command) error {
-	res, err := fetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
+	if len(cmd.Args) == 0 {
+		return fmt.Errorf("register cmd requires name")
+	}
+
+	url := cmd.Args[0]
+
+	_, err := fetchFeed(context.Background(), url)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(res)
+	feed, err := s.db.GetFeedByUrl(context.Background(), url)
+	if err != nil {
+		return err
+	}
+
+	if feed == (database.GetFeedByUrlRow{}) {
+		return fmt.Errorf("feed with url %s not found", url)
+	}
 
 	timeBetweenRequests, _ := time.ParseDuration("1m")
 	ticker := time.NewTicker(timeBetweenRequests)
 	for ; ; <-ticker.C {
-		err := scrapeFeeds(s)
+		err := scrapeFeeds(s, feed.ID)
 		if err != nil {
 			return err
 		}
 	}
-
-	return nil
 }
 
 func HandleAddFeed(s *State, cmd Command, user database.User) error {
@@ -194,12 +207,11 @@ func HandlerFeedUnfollow(s *State, cmd Command, user database.User) error {
 	return nil
 }
 
-func scrapeFeeds(s *State) error {
+func scrapeFeeds(s *State, id uuid.UUID) error {
 	nextToFetch, err := s.db.GetNextFeedToFetch(context.Background())
 	if err != nil {
 		return err
 	}
-
 	err = s.db.MarkFeedFetched(context.Background(), nextToFetch.ID)
 	if err != nil {
 		return err
@@ -209,12 +221,53 @@ func scrapeFeeds(s *State) error {
 	if err != nil {
 		return err
 	}
-
 	for _, item := range res.Channel.Item {
 		fmt.Printf("Title: %s\n", item.Title)
+		p := mapRSSItemToCreatePostParams(item, id)
+		fmt.Println(item.Link)
+		if err := s.db.CreatePost(context.Background(), p); err != nil {
+			fmt.Printf("ERROR occurred %v\n", err)
+		}
 	}
 
 	return nil
+}
+
+func HandleBrowse(s *State, cmd Command, user database.User) error {
+	res, err := s.db.GetPostsForUser(context.Background(), database.GetPostsForUserParams{UserID: s.Config.Current_user.ID, Limit: 10})
+	if err != nil {
+		return fmt.Errorf("failed to get posts for user: %w", err)
+	}
+
+	for _, post := range res {
+		fmt.Printf("Title: %s\n", post.Title)
+		fmt.Printf("Url: %s\n", post.Url)
+		fmt.Printf("Published at: %s\n", post.PublishedAt.Time)
+		fmt.Printf("Feed name: %s\n", post.FeedName)
+		fmt.Printf("Description: %s\n", post.Description.String)
+		fmt.Println("--------------------------------------------------")
+	}
+	return nil
+}
+
+func mapRSSItemToCreatePostParams(item RSSItem, feedId uuid.UUID) database.CreatePostParams {
+	publishedAt, err := time.Parse(time.RFC1123Z, item.PubDate)
+	var nullPublishedAt sql.NullTime
+	if err != nil {
+		nullPublishedAt = sql.NullTime{Valid: false}
+	} else {
+		nullPublishedAt = sql.NullTime{Time: publishedAt, Valid: true}
+	}
+
+	return database.CreatePostParams{
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		Title:       item.Title,
+		Url:         item.Link,
+		Description: sql.NullString{String: item.Description, Valid: item.Description != ""},
+		PublishedAt: nullPublishedAt,
+		FeedID:      feedId,
+	}
 }
 
 func printFeedFollow(feedFollow database.CreateFeedFollowRow) {

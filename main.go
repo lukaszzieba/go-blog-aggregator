@@ -40,6 +40,7 @@ func main() {
 	commands.Register("follow", internal.MiddlewareLoggedIn(internal.HandlerFeedFollow))
 	commands.Register("following", internal.MiddlewareLoggedIn(internal.HandlerFeedFollowing))
 	commands.Register("unfollow", internal.MiddlewareLoggedIn(internal.HandlerFeedUnfollow))
+	commands.Register("browse", internal.MiddlewareLoggedIn(internal.HandleBrowse))
 
 	err = commands.Run(satate, internal.Command{Name: args[0], Args: args[1:]})
 	if err != nil {
