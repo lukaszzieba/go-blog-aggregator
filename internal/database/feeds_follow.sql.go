@@ -132,7 +132,7 @@ func (q *Queries) GetNextFeedToFetch(ctx context.Context) (GetNextFeedToFetchRow
 }
 
 const markFeedFetched = `-- name: MarkFeedFetched :exec
-UPDATE feed_follows SET last_fetched_at = CURRENT_TIMESTAMP, update_at = CURRENT_TIMESTAMP WHERE id = $1
+UPDATE feed_follows SET last_fetched_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $1
 `
 
 func (q *Queries) MarkFeedFetched(ctx context.Context, id uuid.UUID) error {
